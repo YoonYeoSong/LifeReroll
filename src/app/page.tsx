@@ -1,0 +1,2 @@
+import { Generator } from "@/components/Generator"; import { FIRST_ROUND,LATEST_ROUND } from "@/lib/lotto";
+export default function Home(){return <div className="shell"><section className="hero"><p className="eyebrow">KR Lotto 6/45 · Data-driven play</p><h1>현생은 리롤이 안 되지만,<br/>번호는 리롤할 수 있습니다.</h1><p className="lede">과거 로또 데이터를 기반으로 이번 주 10게임을 생성합니다. 숫자 선택의 새로운 루틴을 가볍게 시작해 보세요.</p><Generator/></section><p className="disclaimer">통계 기준: {FIRST_ROUND}회 ~ {LATEST_ROUND}회 · 정상적인 로또 추첨에서 모든 6개 번호 조합의 당첨 확률은 동일합니다.</p></div>}

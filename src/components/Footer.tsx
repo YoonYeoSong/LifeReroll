@@ -1,0 +1,1 @@
+import Link from "next/link"; export function Footer(){return <footer className="footer"><div className="shell footer-inner"><span>© {new Date().getFullYear()} LifeReroll. For fun, not prediction.</span><Link href="/about">How it works</Link></div></footer>}

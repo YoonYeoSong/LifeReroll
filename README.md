@@ -6,7 +6,7 @@ LifeReroll은 대한민국 로또 6/45의 포함된 과거 당첨번호를 바�
 
 ## Features
 
-- 한 번의 Reroll로 서로 다른 방식의 10게임 생성 (Historical 2, Pattern 2, Coverage 2, Pure Random 2, Balanced 1, Ensemble 1)
+- 한 번의 Reroll로 서로 다른 방식의 10게임 생성 (Historical 2, Pattern 2, Coverage·Pure Random·Balanced·Countertrend·Pair Avoidance·Ensemble 각 1)
 - 실제 포함 데이터에서 계산한 전체·최근 100회·Pair 통계
 - 전체 출현빈도, 최근 빈도, Pair 빈도, 조합 형태를 섞은 Pattern Pick
 - 10게임 내 순서 무관 완전 동일 조합 방지 및 Coverage 기반 분산
@@ -24,7 +24,7 @@ LifeReroll은 대한민국 로또 6/45의 포함된 과거 당첨번호를 바�
 - 25% Pair Frequency
 - 15% Combination Shape (홀짝, 구간 분포, 합계, 간격, 연속수, 끝자리 집중)
 
-**Coverage Pick**은 앞선 게임과의 공통 번호, 번호 반복, 전체 번호 범위를 점수화해 결과가 지나치게 닮지 않도록 2게임을 고릅니다. **Pure Random Pick**은 통계를 사용하지 않는 균등 Fisher–Yates 셔플입니다. **Balanced Pick**은 과거 조합 분포를 참고해 극단적인 홀짝·구간·합계·연속 번호 형태를 피할 뿐, 당첨 확률을 예측하지 않습니다. 마지막 **Ensemble Pick**은 Historical, Pattern, Coverage, Balance 점수를 후보별 0~100으로 정규화한 뒤 25%·25%·30%·20% 비율로 합산합니다.
+**Coverage Pick**은 앞선 게임과의 공통 번호, 번호 반복, 전체 번호 범위를 점수화해 결과가 지나치게 닮지 않도록 합니다. **Pure Random Pick**은 통계를 사용하지 않는 균등 Fisher–Yates 셔플입니다. **Balanced Pick**은 과거 조합 분포를 참고해 극단적인 홀짝·구간·합계·연속 번호 형태를 피합니다. **Countertrend Pick**은 상대적으로 낮은 전체·최근 출현 빈도 관점을, **Pair Avoidance Pick**은 낮은 과거 동반 출현 빈도 관점을 제공합니다. 어느 방식도 당첨 확률을 예측하지 않습니다. 마지막 **Ensemble Pick**은 Historical, Pattern, Coverage, Balance 점수를 후보별 0~100으로 정규화한 뒤 25%·25%·30%·20% 비율로 합산합니다.
 
 ## Tech stack
 

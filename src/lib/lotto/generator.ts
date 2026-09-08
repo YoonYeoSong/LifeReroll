@@ -1,9 +1,11 @@
 import { generateBalancedGame } from "./balanced";
 import { COVERAGE_GAME_COUNT, RANDOM_GAME_COUNT, TOTAL_GAME_COUNT } from "./constants";
 import { generateCoverageGame } from "./coverage";
+import { generateCountertrendGame } from "./countertrend";
 import { generateEnsembleGame } from "./ensemble";
 import { generateHistoricalGames } from "./historical";
 import { generatePatternGames } from "./pattern";
+import { generatePairAvoidanceGame } from "./pair-avoidance";
 import { randomGame, type RandomSource, secureRandom } from "./random";
 import type { GeneratedGame, GeneratedGames, LottoStats, PickMethod } from "./types";
 import { assertUniqueGames, gameKey } from "./utils";
@@ -33,6 +35,8 @@ export function generateRerollFromStats(stats: LottoStats, random: RandomSource 
   for (let index = 0; index < COVERAGE_GAME_COUNT; index += 1) games.push({ method: "Coverage Pick", numbers: generateCoverageGame(games.map((game) => game.numbers), used, random) });
   for (let index = 0; index < RANDOM_GAME_COUNT; index += 1) games.push({ method: "Pure Random", numbers: generateUniqueRandomGame(used, random) });
   games.push({ method: "Balanced Pick", numbers: generateBalancedGame(stats, used, random) });
+  games.push({ method: "Countertrend Pick", numbers: generateCountertrendGame(stats, games.map((game) => game.numbers), used, random) });
+  games.push({ method: "Pair Avoidance Pick", numbers: generatePairAvoidanceGame(stats, games.map((game) => game.numbers), used, random) });
   games.push({ method: "Ensemble Pick", numbers: generateEnsembleGame(stats, games.map((game) => game.numbers), used, random) });
   assertUniqueGames(games.map((game) => game.numbers), TOTAL_GAME_COUNT);
   return { games };

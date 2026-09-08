@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { balanceScore, generateBalancedGame } from "./balanced";
 import { coverageScore, generateCoverageGame } from "./coverage";
+import { countertrendScore, generateCountertrendGame } from "./countertrend";
 import { scoreEnsembleCandidates } from "./ensemble";
 import { historicalWeights, generateHistoricalGames } from "./historical";
 import { generateRerollFromStats } from "./generator";
 import { generatePatternGames, patternScore } from "./pattern";
+import { generatePairAvoidanceGame, pairAvoidanceScore } from "./pair-avoidance";
 import { randomGame } from "./random";
 import { calculateStatistics, pairKey } from "./statistics";
 import { gameKey, isValidGame, normalizeGame } from "./utils";
@@ -52,6 +54,16 @@ describe("lotto generators", () => {
     expect(balanceScore(game, stats)).toBeGreaterThan(0.8);
   });
 
+  it("generates Countertrend and Pair Avoidance games with their own scoring views", () => {
+    const existingGames = [[1, 2, 3, 4, 5, 6]];
+    const countertrend = generateCountertrendGame(stats, existingGames, new Set(existingGames.map(gameKey)));
+    const pairAvoidance = generatePairAvoidanceGame(stats, [...existingGames, countertrend], new Set([...existingGames, countertrend].map(gameKey)));
+    assertGame(countertrend);
+    assertGame(pairAvoidance);
+    expect(countertrendScore(countertrend, stats, existingGames)).toBeGreaterThan(0);
+    expect(pairAvoidanceScore(pairAvoidance, stats, [...existingGames, countertrend])).toBeGreaterThan(0);
+  });
+
   it("normalizes every Ensemble component before weighted summation", () => {
     const candidates = scoreEnsembleCandidates([
       { game: [1, 2, 3, 4, 5, 6], historical: 0, pattern: 10, coverage: 100, balance: 20 },
@@ -64,7 +76,7 @@ describe("lotto generators", () => {
   it("produces exactly ten valid, order-independent unique games with every method", () => {
     const result = generateRerollFromStats(stats);
     expect(result.games).toHaveLength(10);
-    expect(result.games.map((game) => game.method)).toEqual(["Historical Pick", "Historical Pick", "Pattern Pick", "Pattern Pick", "Coverage Pick", "Coverage Pick", "Pure Random", "Pure Random", "Balanced Pick", "Ensemble Pick"]);
+    expect(result.games.map((game) => game.method)).toEqual(["Historical Pick", "Historical Pick", "Pattern Pick", "Pattern Pick", "Coverage Pick", "Pure Random", "Balanced Pick", "Countertrend Pick", "Pair Avoidance Pick", "Ensemble Pick"]);
     result.games.forEach((game) => assertGame(game.numbers));
     expect(new Set(result.games.map((game) => gameKey([...game.numbers].reverse()))).size).toBe(10);
   });

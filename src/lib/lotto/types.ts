@@ -19,7 +19,13 @@ export type LottoStats = {
   };
 };
 
+export type PickMethod = "Historical Pick" | "Pattern Pick" | "Coverage Pick" | "Pure Random" | "Balanced Pick" | "Ensemble Pick";
+
+export type GeneratedGame = {
+  method: PickMethod;
+  numbers: number[];
+};
+
 export type GeneratedGames = {
-  historical: number[][];
-  pattern: number[][];
+  games: GeneratedGame[];
 };

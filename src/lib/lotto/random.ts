@@ -1,5 +1,7 @@
 import { LOTTO_MAX, LOTTO_MIN } from "./constants";
 
+export { gameKey, sharedNumberCount } from "./utils";
+
 export type RandomSource = () => number;
 
 export const secureRandom: RandomSource = () => {
@@ -28,13 +30,4 @@ export function randomGame(random: RandomSource = secureRandom): number[] {
     [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]];
   }
   return pool.slice(0, 6).sort((left, right) => left - right);
-}
-
-export function gameKey(game: number[]): string {
-  return game.join("-");
-}
-
-export function sharedNumberCount(left: number[], right: number[]): number {
-  const rightNumbers = new Set(right);
-  return left.filter((number) => rightNumbers.has(number)).length;
 }

@@ -1,4 +1,4 @@
-import { GAMES_PER_METHOD, MAX_SHARED_NUMBERS, PATTERN_CANDIDATE_COUNT, PATTERN_WEIGHTS } from "./constants";
+import { MAX_SHARED_NUMBERS, PATTERN_CANDIDATE_COUNT, PATTERN_GAME_COUNT, PATTERN_WEIGHTS } from "./constants";
 import { gameKey, randomGame, secureRandom, sharedNumberCount, type RandomSource } from "./random";
 import { normalizedCount, pairKey } from "./statistics";
 import type { LottoStats } from "./types";
@@ -32,7 +32,7 @@ export function patternScore(game: number[], stats: LottoStats): number {
   return overall * PATTERN_WEIGHTS.overall + recent * PATTERN_WEIGHTS.recent + pair * PATTERN_WEIGHTS.pair + combinationShapeScore(game, stats) * PATTERN_WEIGHTS.shape;
 }
 
-export function generatePatternGames(stats: LottoStats, excluded = new Set<string>(), random: RandomSource = secureRandom): number[][] {
+export function generatePatternGames(stats: LottoStats, excluded = new Set<string>(), random: RandomSource = secureRandom, count = PATTERN_GAME_COUNT): number[][] {
   const candidates = new Map<string, { game: number[]; score: number }>();
   for (let index = 0; index < PATTERN_CANDIDATE_COUNT; index += 1) {
     const game = randomGame(random);
@@ -42,7 +42,7 @@ export function generatePatternGames(stats: LottoStats, excluded = new Set<strin
   const ranked = [...candidates.values()].sort((left, right) => right.score - left.score);
   const picked: number[][] = [];
   for (const candidate of ranked) {
-    if (picked.length === GAMES_PER_METHOD) break;
+    if (picked.length === count) break;
     if (picked.every((game) => sharedNumberCount(game, candidate.game) <= MAX_SHARED_NUMBERS)) {
       picked.push(candidate.game);
       excluded.add(gameKey(candidate.game));

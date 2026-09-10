@@ -1,0 +1,4 @@
+import { Disclaimers } from "@/components/housing/Disclaimers";
+import { HousingNav } from "@/components/housing/HousingNav";
+export const metadata = { title: "서비스 안내 | 청약핏" };
+export default function HousingAboutPage() { return <div className="shell housing-page"><HousingNav /><header className="housing-heading"><p className="housing-kicker">ABOUT CHEONGYAK FIT</p><h1>청약핏 서비스 안내</h1><p>청약핏은 공고 일정만 나열하지 않고, 사용자가 현실적으로 검토할 항목을 정리하는 보조 도구입니다.</p></header><section className="housing-card prose"><h2>어떻게 분석하나요?</h2><p>무주택·세대·지역·거주기간·소득·자산·특별공급 기초 조건을 공고 기준으로 비교합니다. 통장 종류, 가입기간, 인정회차, 인정금액을 별도로 보고, 자기자금·증여·차용·예상 금융조달도 구분해 계산합니다.</p><h2>데이터와 개인정보</h2><p>v1은 테스트 fixture 데이터만 사용합니다. 향후 청약홈, LH, 국토교통부 공개 데이터를 연결할 때는 서버 측 어댑터를 사용하고, 출처·기준일·원문 링크를 표시합니다. API 키는 클라이언트에 노출하지 않습니다.</p><p>프로필은 이 브라우저의 localStorage에만 저장됩니다. 주민등록번호, 계좌번호, 인증서, 은행 로그인 정보와 정확한 주소는 수집하지 않습니다.</p></section><Disclaimers /></div>; }

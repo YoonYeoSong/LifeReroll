@@ -3,6 +3,7 @@ import type { HousingNotice } from "./types";
 
 const LH_NOTICE_ENDPOINT = "https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/lhLeaseNoticeInfo1";
 const SMALL_TEST_PAGE_SIZE = 3;
+const SALE_HOUSING_TYPE_CODE = "05";
 
 export type NoticeFeedMode = "live" | "fixture" | "fallback";
 
@@ -134,6 +135,7 @@ export async function getPublicHousingNoticeFeed(): Promise<PublicNoticeFeed> {
   url.searchParams.set("serviceKey", decodedServiceKey);
   url.searchParams.set("PG_SZ", String(SMALL_TEST_PAGE_SIZE));
   url.searchParams.set("PAGE", "1");
+  url.searchParams.set("AIS_TP_CD", SALE_HOUSING_TYPE_CODE);
 
   try {
     const response = await fetch(url, {

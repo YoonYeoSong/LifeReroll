@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLhNoticeUrl, parseLhNoticeResponse } from "./public-notices";
+import { buildLhNoticeUrl, parseLhNoticeResponse, parseLhSaleHousingTypes } from "./public-notices";
 
 describe("LH public notice response", () => {
   it("normalizes a small JSON response without inferring eligibility rules", () => {
@@ -21,5 +21,10 @@ describe("LH public notice response", () => {
     expect(url.searchParams.get("AIS_TP_CD")).toBeNull();
     expect(url.searchParams.get("CNP_CD")).toBe("41");
     expect(url.searchParams.get("PG_SZ")).toBe("3");
+  });
+
+  it("reads the LH detail table into housing types with official average prices", () => {
+    const housingTypes = parseLhSaleHousingTypes(`<h3>주택형 안내(공공분양)</h3><table><tr><th>주택형</th><th>전용면적(㎡)</th><th>세대수</th><th>금회공급 세대수</th><th>평균분양가격(원)</th></tr><tr><td>59.7400A</td><td>59.74</td><td>262</td><td>262</td><td>353,694,000</td></tr></table>`);
+    expect(housingTypes).toEqual([expect.objectContaining({ typeName: "59.7400A", exclusiveArea: 59.74, supplyCount: 262, price: 353_694_000 })]);
   });
 });

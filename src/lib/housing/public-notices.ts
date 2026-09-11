@@ -4,6 +4,10 @@ import type { HousingNotice } from "./types";
 const LH_NOTICE_ENDPOINT = "https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/lhLeaseNoticeInfo1";
 const SMALL_TEST_PAGE_SIZE = 3;
 const SALE_HOUSING_TYPE_CODE = "05";
+const regionCodes: Record<string, string> = {
+  "서울특별시": "11", "부산광역시": "26", "대구광역시": "27", "인천광역시": "28", "광주광역시": "29", "대전광역시": "30", "울산광역시": "31", "세종특별자치시": "36",
+  "경기도": "41", "강원특별자치도": "42", "충청북도": "43", "충청남도": "44", "전북특별자치도": "45", "전라남도": "46", "경상북도": "47", "경상남도": "48", "제주특별자치도": "50",
+};
 
 export type NoticeFeedMode = "live" | "fixture" | "fallback";
 
@@ -11,6 +15,10 @@ export interface PublicNoticeFeed {
   mode: NoticeFeedMode;
   notices: HousingNotice[];
   updatedAt: string;
+}
+
+export interface PublicNoticeFeedInput {
+  region?: string;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -120,10 +128,7 @@ function fixtureFeed(mode: Extract<NoticeFeedMode, "fixture" | "fallback">): Pub
   };
 }
 
-export async function getPublicHousingNoticeFeed(): Promise<PublicNoticeFeed> {
-  const serviceKey = process.env.DATA_GO_KR_SERVICE_KEY;
-  if (!serviceKey) return fixtureFeed("fixture");
-
+export function buildLhNoticeUrl(serviceKey: string, input: PublicNoticeFeedInput = {}): URL {
   const url = new URL(process.env.LH_HOUSING_NOTICES_URL ?? LH_NOTICE_ENDPOINT);
   // data.go.kr shows both encoded and decoded keys. Normalize either form before URLSearchParams encodes it.
   let decodedServiceKey = serviceKey;
@@ -135,7 +140,17 @@ export async function getPublicHousingNoticeFeed(): Promise<PublicNoticeFeed> {
   url.searchParams.set("serviceKey", decodedServiceKey);
   url.searchParams.set("PG_SZ", String(SMALL_TEST_PAGE_SIZE));
   url.searchParams.set("PAGE", "1");
-  url.searchParams.set("AIS_TP_CD", SALE_HOUSING_TYPE_CODE);
+  url.searchParams.set("UPP_AIS_TP_CD", SALE_HOUSING_TYPE_CODE);
+  const regionCode = input.region ? regionCodes[input.region] : undefined;
+  if (regionCode) url.searchParams.set("CNP_CD", regionCode);
+  return url;
+}
+
+export async function getPublicHousingNoticeFeed(input: PublicNoticeFeedInput = {}): Promise<PublicNoticeFeed> {
+  const serviceKey = process.env.DATA_GO_KR_SERVICE_KEY;
+  if (!serviceKey) return fixtureFeed("fixture");
+
+  const url = buildLhNoticeUrl(serviceKey, input);
 
   try {
     const response = await fetch(url, {

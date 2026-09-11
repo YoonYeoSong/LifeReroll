@@ -1,0 +1,10 @@
+.liveNoticeList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+.liveNoticeCard{display:grid;align-content:start;gap:.65rem;min-width:0;padding:1.05rem;border:1px solid rgb(255 241 168 / 25%);border-radius:1.15rem;background:linear-gradient(145deg,rgb(71 56 104 / 72%),rgb(31 28 61 / 90%))}
+.liveNoticeTopline{display:flex;justify-content:space-between;gap:.4rem;color:#fff1a8;font-size:.7rem;font-weight:900;letter-spacing:.04em}
+.liveNoticeTopline span:last-child{color:#c8ffc9}
+.liveNoticeCard h3{display:-webkit-box;overflow:hidden;margin:0;font-size:1rem;line-height:1.45;letter-spacing:-.025em;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.liveNoticeRegion,.liveNoticeDates{margin:0;color:var(--muted);font-size:.78rem;line-height:1.45}
+.liveNoticeRegion{color:#e4dff1;font-weight:800}
+.liveNoticeLink{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-top:.1rem;padding-top:.7rem;border-top:1px solid rgb(255 255 255 / 10%);color:#bff7d3;font-size:.8rem;font-weight:900}
+.liveNoticeLink span{font-size:1rem}
+@media(max-width:760px){.liveNoticeList{grid-template-columns:1fr}.liveNoticeCard h3{-webkit-line-clamp:2}}

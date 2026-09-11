@@ -15,6 +15,7 @@ export interface UserProfile {
   assets: { availableCash: number; savings: number; financialAssets: number; realEstateAssets: number; leaseDeposit: number; vehicleValue: number; otherAssets: number };
   debts: { type: string; balance: number; interestRate: number; monthlyPayment: number; remainingMonths: number }[];
   familySupport: { gift?: { amount: number; previousGiftAmount: number }; loan?: { amount: number; interestRate: number; repaymentYears: number; monthlyRepayment: number } };
+  financingPlan?: { plannedCreditLoanAmount: number };
   preferences: { preferredRegions: string[]; preferredHousingSizes: number[]; maxPrice: number; housingSupplyTypes: string[]; newHomeTypes: string[] };
 }
 
@@ -28,7 +29,7 @@ export interface HousingNotice {
 
 export interface Reason { label: string; status: EligibilityStatus | FundingStatus; detail: string; }
 export interface SubscriptionAnalysis { status: EligibilityStatus; monthsOpen?: number; reasons: Reason[]; }
-export interface FundingAnalysis { status: FundingStatus; ownFunds: number; giftFunds: number; familyLoanFunds: number; estimatedFinancing: { estimated: number; min: number; max: number; assumptions: string[] }; estimatedLoans: { mortgage: number; generalLoan: number }; totalExpectedFunds: number; shortfall: number; reasons: Reason[]; }
+export interface FundingAnalysis { status: FundingStatus; ownFunds: number; leaseDepositReturnFunds: number; giftFunds: number; familyLoanFunds: number; estimatedFinancing: { estimated: number; min: number; max: number; assumptions: string[] }; estimatedLoans: { mortgage: number; plannedCreditLoan: number }; totalExpectedFunds: number; shortfall: number; reasons: Reason[]; }
 export interface EligibilityAnalysis { status: EligibilityStatus; reasons: Reason[]; }
 export interface Recommendation { notice: HousingNotice; housingType: HousingType; eligibility: EligibilityAnalysis; subscription: SubscriptionAnalysis; funding: FundingAnalysis; eligibilityScore: number; subscriptionFitScore: number; fundingScore: number; priceValueScore: number; overallScore: number; status: MatchStatus; reasons: string[]; }
 

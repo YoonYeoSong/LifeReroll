@@ -26,8 +26,14 @@ describe("Cheongyak Fit analysis", () => {
     const result = analyzeFunding(sampleUser, notice.housingTypes[0]);
     expect(result.giftFunds).toBe(sampleUser.familySupport.gift?.amount);
     expect(result.familyLoanFunds).toBe(sampleUser.familySupport.loan?.amount);
-    expect(result.totalExpectedFunds).toBe(result.ownFunds + result.giftFunds + result.familyLoanFunds + result.estimatedFinancing.estimated);
-    expect(result.estimatedLoans.mortgage + result.estimatedLoans.generalLoan).toBe(result.estimatedFinancing.estimated);
+    expect(result.totalExpectedFunds).toBe(result.ownFunds + result.leaseDepositReturnFunds + result.giftFunds + result.familyLoanFunds + result.estimatedFinancing.estimated);
+    expect(result.estimatedLoans.mortgage).toBe(result.estimatedFinancing.estimated);
+    expect(result.estimatedLoans.plannedCreditLoan).toBe(0);
+  });
+  it("adds a credit loan only when the user explicitly enters a plan", () => {
+    const result = analyzeFunding({ ...sampleUser, financingPlan: { plannedCreditLoanAmount: 20_000_000 } }, notice.housingTypes[0]);
+    expect(result.estimatedLoans.plannedCreditLoan).toBe(20_000_000);
+    expect(result.totalExpectedFunds).toBe(result.ownFunds + result.leaseDepositReturnFunds + result.giftFunds + result.familyLoanFunds + result.estimatedFinancing.estimated + 20_000_000);
   });
   it("makes a shortfall visible for an unaffordable type", () => {
     const result = analyzeFunding({ ...sampleUser, assets: { ...sampleUser.assets, availableCash: 0, savings: 0, financialAssets: 0 }, familySupport: {} }, housingNotices[1].housingTypes[0]);

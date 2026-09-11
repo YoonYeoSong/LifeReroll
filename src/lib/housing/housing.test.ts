@@ -27,6 +27,7 @@ describe("Cheongyak Fit analysis", () => {
     expect(result.giftFunds).toBe(sampleUser.familySupport.gift?.amount);
     expect(result.familyLoanFunds).toBe(sampleUser.familySupport.loan?.amount);
     expect(result.totalExpectedFunds).toBe(result.ownFunds + result.giftFunds + result.familyLoanFunds + result.estimatedFinancing.estimated);
+    expect(result.estimatedLoans.mortgage + result.estimatedLoans.generalLoan).toBe(result.estimatedFinancing.estimated);
   });
   it("makes a shortfall visible for an unaffordable type", () => {
     const result = analyzeFunding({ ...sampleUser, assets: { ...sampleUser.assets, availableCash: 0, savings: 0, financialAssets: 0 }, familySupport: {} }, housingNotices[1].housingTypes[0]);

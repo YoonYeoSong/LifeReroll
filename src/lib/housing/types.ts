@@ -28,7 +28,7 @@ export interface HousingNotice {
 
 export interface Reason { label: string; status: EligibilityStatus | FundingStatus; detail: string; }
 export interface SubscriptionAnalysis { status: EligibilityStatus; monthsOpen?: number; reasons: Reason[]; }
-export interface FundingAnalysis { status: FundingStatus; ownFunds: number; giftFunds: number; familyLoanFunds: number; estimatedFinancing: { estimated: number; min: number; max: number; assumptions: string[] }; totalExpectedFunds: number; shortfall: number; reasons: Reason[]; }
+export interface FundingAnalysis { status: FundingStatus; ownFunds: number; giftFunds: number; familyLoanFunds: number; estimatedFinancing: { estimated: number; min: number; max: number; assumptions: string[] }; estimatedLoans: { mortgage: number; generalLoan: number }; totalExpectedFunds: number; shortfall: number; reasons: Reason[]; }
 export interface EligibilityAnalysis { status: EligibilityStatus; reasons: Reason[]; }
 export interface Recommendation { notice: HousingNotice; housingType: HousingType; eligibility: EligibilityAnalysis; subscription: SubscriptionAnalysis; funding: FundingAnalysis; eligibilityScore: number; subscriptionFitScore: number; fundingScore: number; priceValueScore: number; overallScore: number; status: MatchStatus; reasons: string[]; }
 

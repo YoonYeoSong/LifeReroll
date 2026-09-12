@@ -2,7 +2,7 @@ import { housingNotices } from "../../data/housing/notices";
 import type { HousingNotice } from "./types";
 
 const LH_NOTICE_ENDPOINT = "https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/lhLeaseNoticeInfo1";
-const SMALL_TEST_PAGE_SIZE = 3;
+const NOTICE_PAGE_SIZE = 20;
 const SALE_HOUSING_TYPE_CODE = "05";
 const regionCodes: Record<string, string> = {
   "서울특별시": "11", "부산광역시": "26", "대구광역시": "27", "인천광역시": "28", "광주광역시": "29", "대전광역시": "30", "울산광역시": "31", "세종특별자치시": "36",
@@ -10,11 +10,14 @@ const regionCodes: Record<string, string> = {
 };
 
 export type NoticeFeedMode = "live" | "fixture" | "fallback";
+export type NoticeFeedStatus = "live" | "missing_key" | "upstream_error" | "empty";
 
 export interface PublicNoticeFeed {
   mode: NoticeFeedMode;
+  status: NoticeFeedStatus;
   notices: HousingNotice[];
   updatedAt: string;
+  message?: string;
 }
 
 export interface PublicNoticeFeedInput {
@@ -175,8 +178,10 @@ export function parseLhNoticeResponse(body: string, contentType = ""): HousingNo
 function fixtureFeed(mode: Extract<NoticeFeedMode, "fixture" | "fallback">): PublicNoticeFeed {
   return {
     mode,
+    status: mode === "fixture" ? "missing_key" : "upstream_error",
     notices: housingNotices.filter((notice) => !notice.isHistorical),
     updatedAt: new Date().toISOString(),
+    message: mode === "fixture" ? "LH API 키가 배포 환경에 설정되지 않았습니다." : "LH 공고 서비스를 지금 불러오지 못했습니다.",
   };
 }
 
@@ -190,7 +195,7 @@ export function buildLhNoticeUrl(serviceKey: string, input: PublicNoticeFeedInpu
     // Keep the original value; the provider will return a safe fixture fallback if it is invalid.
   }
   url.searchParams.set("serviceKey", decodedServiceKey);
-  url.searchParams.set("PG_SZ", String(SMALL_TEST_PAGE_SIZE));
+  url.searchParams.set("PG_SZ", String(NOTICE_PAGE_SIZE));
   url.searchParams.set("PAGE", "1");
   url.searchParams.set("UPP_AIS_TP_CD", SALE_HOUSING_TYPE_CODE);
   const regionCode = input.region ? regionCodes[input.region] : undefined;
@@ -207,14 +212,22 @@ export async function getPublicHousingNoticeFeed(input: PublicNoticeFeedInput = 
   try {
     const response = await fetch(url, {
       headers: { Accept: "application/json, application/xml;q=0.9, text/xml;q=0.8" },
-      next: { revalidate: 60 * 60 },
+      next: { revalidate: 60 * 5 },
     });
     if (!response.ok) throw new Error(`LH API responded with ${response.status}`);
 
     const notices = parseLhNoticeResponse(await response.text(), response.headers.get("content-type") ?? "");
-    if (!notices.length) throw new Error("LH API returned no readable notice items");
+    if (!notices.length) {
+      return {
+        mode: "live",
+        status: "empty",
+        notices: [],
+        updatedAt: new Date().toISOString(),
+        message: "LH에서 현재 조회 조건에 맞는 공공분양 공고를 반환하지 않았습니다.",
+      };
+    }
 
-    return { mode: "live", notices: await Promise.all(notices.map(enrichLhSaleNotice)), updatedAt: new Date().toISOString() };
+    return { mode: "live", status: "live", notices: await Promise.all(notices.map(enrichLhSaleNotice)), updatedAt: new Date().toISOString() };
   } catch (error) {
     console.error("LH notice feed unavailable", error instanceof Error ? error.message : "unknown error");
     return fixtureFeed("fallback");

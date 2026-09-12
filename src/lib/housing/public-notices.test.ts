@@ -20,7 +20,7 @@ describe("LH public notice response", () => {
     expect(url.searchParams.get("UPP_AIS_TP_CD")).toBe("05");
     expect(url.searchParams.get("AIS_TP_CD")).toBeNull();
     expect(url.searchParams.get("CNP_CD")).toBe("41");
-    expect(url.searchParams.get("PG_SZ")).toBe("3");
+    expect(url.searchParams.get("PG_SZ")).toBe("20");
   });
 
   it("reads the LH detail table into housing types with official average prices", () => {

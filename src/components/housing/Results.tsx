@@ -11,12 +11,14 @@ const STORAGE_KEY = "cheongyak-fit-profile-v1";
 const eligibilityLabels = { STRONG_MATCH: "조건 적합", POSSIBLE: "검토 가능", REVIEW_REQUIRED: "확인 필요", DIFFICULT: "확인 필요", INELIGIBLE: "조건 미충족" };
 const fundingLabels: Record<FundingStatus, string> = { sufficient: "예상 자금 계획 충족", possible: "심사·자금 확인 필요", additional_funds_needed: "추가 자금 필요", insufficient: "예상 자금 부족" };
 
-interface LiveNoticeResponse { mode: "live" | "fixture" | "fallback"; notices: HousingNotice[]; }
+interface LiveNoticeResponse { mode: "live" | "fixture" | "fallback"; status: "live" | "missing_key" | "upstream_error" | "empty"; notices: HousingNotice[]; updatedAt: string; message?: string; }
 
 export function Results() {
   const [items, setItems] = useState<Recommendation[]>([]);
   const [history, setHistory] = useState<Recommendation[]>([]);
   const [liveItems, setLiveItems] = useState<Recommendation[]>([]);
+  const [liveNotices, setLiveNotices] = useState<HousingNotice[]>([]);
+  const [liveFeed, setLiveFeed] = useState<LiveNoticeResponse>();
   const [hasProfile, setHasProfile] = useState(false);
 
   useEffect(() => {
@@ -24,12 +26,20 @@ export function Results() {
     if (!stored) return;
     try {
       const profile: UserProfile = JSON.parse(stored);
-      const region = profile.preferences.preferredRegions[0] || profile.residenceRegion;
+      const allRegionsSelected = profile.preferences.preferredRegions.length === 17;
+      const region = allRegionsSelected ? undefined : profile.preferences.preferredRegions[0] || profile.residenceRegion;
       const historicalNotices = housingNotices.filter((notice) => notice.isHistorical).map((notice) => ({ ...notice, isHistorical: false }));
       queueMicrotask(() => { setItems(recommend(profile, housingNotices)); setHistory(recommend(profile, historicalNotices)); setHasProfile(true); });
       const params = new URLSearchParams();
       if (region) params.set("region", region);
-      fetch(`/api/housing/notices?${params.toString()}`).then((response) => response.ok ? response.json() as Promise<LiveNoticeResponse> : undefined).then((feed) => { if (feed?.mode === "live") setLiveItems(recommend(profile, feed.notices)); }).catch(() => { /* Official notice details are optional and never replace local simulations. */ });
+      fetch(`/api/housing/notices?${params.toString()}`).then((response) => response.ok ? response.json() as Promise<LiveNoticeResponse> : undefined).then((feed) => {
+        if (!feed) return;
+        setLiveFeed(feed);
+        if (feed.mode === "live") {
+          setLiveNotices(feed.notices);
+          setLiveItems(recommend(profile, feed.notices));
+        }
+      }).catch(() => setLiveFeed({ mode: "fallback", status: "upstream_error", notices: [], updatedAt: new Date().toISOString(), message: "공고 조회 요청에 연결하지 못했습니다." }));
     } catch { localStorage.removeItem(STORAGE_KEY); }
   }, []);
 
@@ -44,9 +54,17 @@ export function Results() {
 
   return <div className="analysis-layout"><main className="analysis-main">
     <section className="plan-intro housing-card"><p className="housing-kicker">ESTIMATED FINANCING PLAN</p><h2>공고별 타입으로 보는 예상 대출·자금 플랜</h2><p>LH 공식 공고에서 읽어온 주택형·평균 분양가와 예시 분양 정보를 함께 적용해, 타입별 예상 대출 범위와 부족자금을 계산합니다. 청약 조건은 신청 전 별도로 확인할 보조 정보입니다.</p><p className="estimate-warning"><b>중요:</b> 공식 공고의 평균 분양가를 제외한 총비용·대출 가능성·대출 한도는 모두 참고용 추정치입니다. 실제 대출은 소득, DSR·LTV, 신용, 담보, 기존 부채, 은행 상품과 심사 시점에 따라 달라지며 승인이나 한도를 보장하지 않습니다.</p></section>
+    <LiveNoticeStatus feed={liveFeed} notices={liveNotices} />
     {plans.map((plan) => <section className={`plan-section plan-${plan.key}`} key={plan.key}><div className="plan-heading"><div><h2>{plan.title}</h2><p>{plan.description}</p></div><span>{plan.items.length}개 타입</span></div><div className="result-list">{groupNoticeItems(plan.items).map((noticeItems) => <NoticeTypeSwitcher items={noticeItems} key={noticeItems[0].notice.noticeId} />)}</div></section>)}
     {!plans.length && <div className="housing-card"><h2>계산할 예시 분양 정보가 없어요</h2><p>희망 지역 또는 자금 입력값을 조정하면 예상 대출·자금 시뮬레이션을 다시 볼 수 있습니다.</p><Link href="/housing/profile">조건 수정하기</Link></div>}
   </main><aside className="history-aside"><section className="historical-reference housing-card"><p className="housing-kicker">PAST SALE SIMULATION</p><h2>과거 분양에도 자금 계획을 대입해 보세요</h2><p>당시 분양가에 현재 입력 자금과 참고용 대출 추정치를 적용한 시뮬레이션입니다. 실제 과거 대출·자격·당첨 결과가 아닙니다.</p>{history.length ? history.map((item) => <article className="past-card" key={`${item.notice.noticeId}-${item.housingType.typeName}`}><p>{item.notice.noticeDate} · {item.notice.region}</p><h3>{item.notice.title} {item.housingType.typeName}</h3><strong>당시 분양가 {formatWon(item.housingType.price)}</strong><span className={`status status-${item.status.toLowerCase()}`}>{fundingLabels[item.funding.status]}</span><ul><li>참고용 예상 담보대출 {formatWon(item.funding.estimatedLoans.mortgage)}</li>{item.funding.shortfall > 0 && <li>예상 추가자금 {formatWon(item.funding.shortfall)}</li>}</ul></article>) : <p>선택한 지역에 비교할 과거 사례가 없습니다.</p>}</section></aside></div>;
+}
+
+function LiveNoticeStatus({ feed, notices }: { feed: LiveNoticeResponse | undefined; notices: HousingNotice[] }) {
+  if (!feed) return <section className="housing-card live-feed-status"><p className="housing-kicker">LH LIVE CHECK</p><h2>LH 공고를 확인하는 중입니다</h2><p>공식 공공분양 공고와 주택형 정보를 불러오고 있습니다.</p></section>;
+  if (feed.status === "empty") return <section className="housing-card live-feed-status"><p className="housing-kicker">LH LIVE CHECK</p><h2>현재 조회된 LH 공공분양 공고가 없습니다</h2><p>{feed.message}</p><p className="source-line">확인 시각 {new Date(feed.updatedAt).toLocaleString("ko-KR")}</p></section>;
+  if (feed.mode !== "live" || feed.status !== "live") return <section className="housing-card live-feed-status is-warning"><p className="housing-kicker">LH LIVE CHECK</p><h2>LH 실시간 공고를 표시하지 못했습니다</h2><p>{feed.message ?? "LH 공고 조회 상태를 확인해 주세요."}</p><p className="source-line">상태: {feed.status} · 확인 시각 {new Date(feed.updatedAt).toLocaleString("ko-KR")}</p></section>;
+  return <section className="housing-card live-feed-status"><p className="housing-kicker">LH LIVE CHECK</p><h2>LH 공공분양 공고 {notices.length}건을 조회했습니다</h2><p className="source-line">확인 시각 {new Date(feed.updatedAt).toLocaleString("ko-KR")} · 주택형·분양가가 읽힌 공고만 아래 자금 플랜에 반영됩니다.</p>{notices.length > 0 && <div className="live-notice-list">{notices.map(notice => <article key={notice.noticeId}><div><strong>{notice.title}</strong><p>{notice.region} · 접수 {notice.applicationStartDate || "일정 확인 필요"} ~ {notice.applicationEndDate || "일정 확인 필요"}</p></div><a href={notice.sourceUrl} target="_blank" rel="noreferrer">원문 보기</a></article>)}</div>}</section>;
 }
 
 function formatHousingType(item: Recommendation): string {

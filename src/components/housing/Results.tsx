@@ -45,16 +45,17 @@ export function Results() {
 
   if (!hasProfile) return <div className="housing-card empty-results"><h2>먼저 자금 계획을 입력해 주세요</h2><p>입력한 소득·자금으로 예상 대출 범위와 추가 필요자금을 참고용으로 계산합니다.</p><Link className="housing-primary" href="/housing/profile">내 조건 입력하기</Link></div>;
 
+  const noticeGroups = groupNoticeItems(liveItems);
   const plans = [
-    { key: "low", title: "예상 자금 계획이 맞는 분양", description: "입력 자금과 참고용 대출 예상치를 합산했을 때 총 예상비용을 충당하는 경우", items: liveItems.filter((item) => item.funding.status === "sufficient") },
-    { key: "review", title: "대출 심사·자금 확인이 필요한 분양", description: "금융기관의 실제 심사, 계약 조건 또는 일부 자금 조정이 필요한 경우", items: liveItems.filter((item) => ["possible", "additional_funds_needed"].includes(item.funding.status)) },
-    { key: "risk", title: "추가 자금 계획이 큰 분양", description: "참고용 예상 대출을 반영해도 자금 차이가 큰 경우", items: liveItems.filter((item) => item.funding.status === "insufficient") },
-  ].filter((plan) => plan.items.length);
+    { key: "low", title: "예상 자금 계획이 맞는 분양", description: "모든 타입의 예상 자금 계획이 충족되는 공고", notices: noticeGroups.filter((items) => planKeyForNotice(items) === "low") },
+    { key: "review", title: "대출 심사·자금 확인이 필요한 분양", description: "일부 타입에서 실제 심사 또는 자금 확인이 필요한 공고", notices: noticeGroups.filter((items) => planKeyForNotice(items) === "review") },
+    { key: "risk", title: "추가 자금 계획이 큰 분양", description: "하나 이상의 타입에서 추가 자금 계획이 필요한 공고", notices: noticeGroups.filter((items) => planKeyForNotice(items) === "risk") },
+  ].filter((plan) => plan.notices.length);
 
   return <main className="analysis-main">
     <section className="plan-intro housing-card"><p className="housing-kicker">ESTIMATED FINANCING PLAN</p><h2>공고별 타입으로 보는 예상 대출·자금 플랜</h2><p>LH 공식 공고에서 읽어온 주택형·평균 분양가를 적용해 타입별 예상 대출 범위와 부족자금을 계산합니다. 청약 조건은 신청 전 별도로 확인할 보조 정보입니다.</p><p className="estimate-warning"><b>중요:</b> 공식 공고의 평균 분양가를 제외한 총비용·대출 가능성·대출 한도는 모두 참고용 추정치입니다. 실제 대출은 소득, DSR·LTV, 신용, 담보, 기존 부채, 은행 상품과 심사 시점에 따라 달라지며 승인이나 한도를 보장하지 않습니다.</p></section>
     <LiveNoticeStatus feed={liveFeed} notices={liveNotices} />
-    {plans.map((plan) => <section className={`plan-section plan-${plan.key}`} key={plan.key}><div className="plan-heading"><div><h2>{plan.title}</h2><p>{plan.description}</p></div><span>{plan.items.length}개 타입</span></div><div className="result-list">{groupNoticeItems(plan.items).map((noticeItems) => <NoticeTypeSwitcher items={noticeItems} key={noticeItems[0].notice.noticeId} />)}</div></section>)}
+    {plans.map((plan) => <section className={`plan-section plan-${plan.key}`} key={plan.key}><div className="plan-heading"><div><h2>{plan.title}</h2><p>{plan.description}</p></div><span>{plan.notices.length}건</span></div><div className="result-list">{plan.notices.map((noticeItems) => <NoticeTypeSwitcher items={noticeItems} key={noticeItems[0].notice.noticeId} />)}</div></section>)}
     {!plans.length && <div className="housing-card"><h2>표시할 공식 공고가 없어요</h2><p>현재 조회 조건에 맞는 LH 공고가 없거나, 공고의 주택형·분양가 정보를 아직 읽어오지 못했습니다.</p><Link href="/housing/profile">조건 수정하기</Link></div>}
   </main>;
 }
@@ -78,6 +79,13 @@ function groupNoticeItems(items: Recommendation[]): Recommendation[][] {
   const grouped = new Map<string, Recommendation[]>();
   for (const item of items) grouped.set(item.notice.noticeId, [...(grouped.get(item.notice.noticeId) ?? []), item]);
   return [...grouped.values()];
+}
+
+function planKeyForNotice(items: Recommendation[]): "low" | "review" | "risk" {
+  const statuses = items.map((item) => item.funding.status);
+  if (statuses.includes("insufficient")) return "risk";
+  if (statuses.some((status) => status === "possible" || status === "additional_funds_needed")) return "review";
+  return "low";
 }
 
 function NoticeTypeSwitcher({ items }: { items: Recommendation[] }) {

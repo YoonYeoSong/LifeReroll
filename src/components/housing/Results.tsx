@@ -23,11 +23,15 @@ export function Results() {
     if (!stored) return;
     try {
       const profile: UserProfile = JSON.parse(stored);
-      const allRegionsSelected = profile.preferences.preferredRegions.length === 17;
-      const region = allRegionsSelected ? undefined : profile.preferences.preferredRegions[0] || profile.residenceRegion;
+      const selectedRegions = [...new Set(profile.preferences.preferredRegions)];
+      const allRegionsSelected = selectedRegions.length === 17;
       queueMicrotask(() => setHasProfile(true));
       const params = new URLSearchParams();
-      if (region) params.set("region", region);
+      if (!allRegionsSelected) {
+        for (const region of selectedRegions.length ? selectedRegions : [profile.residenceRegion]) {
+          if (region) params.append("region", region);
+        }
+      }
       fetch(`/api/housing/notices?${params.toString()}`).then((response) => response.ok ? response.json() as Promise<LiveNoticeResponse> : undefined).then((feed) => {
         if (!feed) return;
         setLiveFeed(feed);

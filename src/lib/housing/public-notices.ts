@@ -21,6 +21,7 @@ export interface PublicNoticeFeed {
 
 export interface PublicNoticeFeedInput {
   region?: string;
+  regions?: string[];
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -209,16 +210,21 @@ export async function getPublicHousingNoticeFeed(input: PublicNoticeFeedInput = 
   const serviceKey = process.env.DATA_GO_KR_SERVICE_KEY;
   if (!serviceKey) return fixtureFeed("fixture");
 
-  const url = buildLhNoticeUrl(serviceKey, input);
+  const requestedRegions = [...new Set(input.regions ?? (input.region ? [input.region] : []))]
+    .filter((region) => Boolean(regionCodes[region]));
+  // One nationwide request is more efficient when every region is selected.
+  const regionsToFetch = requestedRegions.length === Object.keys(regionCodes).length ? [] : requestedRegions;
 
   try {
-    const response = await fetch(url, {
-      headers: { Accept: "application/json, application/xml;q=0.9, text/xml;q=0.8" },
-      next: { revalidate: 60 * 5 },
-    });
-    if (!response.ok) throw new Error(`LH API responded with ${response.status}`);
-
-    const notices = parseLhNoticeResponse(await response.text(), response.headers.get("content-type") ?? "");
+    const responses = await Promise.all((regionsToFetch.length ? regionsToFetch : [undefined]).map(async (region) => {
+      const response = await fetch(buildLhNoticeUrl(serviceKey, { region }), {
+        headers: { Accept: "application/json, application/xml;q=0.9, text/xml;q=0.8" },
+        next: { revalidate: 60 * 5 },
+      });
+      if (!response.ok) throw new Error(`LH API responded with ${response.status}`);
+      return parseLhNoticeResponse(await response.text(), response.headers.get("content-type") ?? "");
+    }));
+    const notices = [...new Map(responses.flat().map((notice) => [notice.noticeId, notice])).values()];
     if (!notices.length) {
       return {
         mode: "live",

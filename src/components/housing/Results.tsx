@@ -44,7 +44,7 @@ export function Results() {
 
   return <div className="analysis-layout"><main className="analysis-main">
     <section className="plan-intro housing-card"><p className="housing-kicker">ESTIMATED FINANCING PLAN</p><h2>공고별 타입으로 보는 예상 대출·자금 플랜</h2><p>LH 공식 공고에서 읽어온 주택형·평균 분양가와 예시 분양 정보를 함께 적용해, 타입별 예상 대출 범위와 부족자금을 계산합니다. 청약 조건은 신청 전 별도로 확인할 보조 정보입니다.</p><p className="estimate-warning"><b>중요:</b> 공식 공고의 평균 분양가를 제외한 총비용·대출 가능성·대출 한도는 모두 참고용 추정치입니다. 실제 대출은 소득, DSR·LTV, 신용, 담보, 기존 부채, 은행 상품과 심사 시점에 따라 달라지며 승인이나 한도를 보장하지 않습니다.</p></section>
-    {plans.map((plan) => <section className={`plan-section plan-${plan.key}`} key={plan.key}><div className="plan-heading"><div><h2>{plan.title}</h2><p>{plan.description}</p></div><span>{plan.items.length}건</span></div><div className="result-list">{plan.items.map((item) => <PlanCard item={item} key={`${item.notice.noticeId}-${item.housingType.typeName}`} />)}</div></section>)}
+    {plans.map((plan) => <section className={`plan-section plan-${plan.key}`} key={plan.key}><div className="plan-heading"><div><h2>{plan.title}</h2><p>{plan.description}</p></div><span>{plan.items.length}개 타입</span></div><div className="result-list">{groupNoticeItems(plan.items).map((noticeItems) => <NoticeTypeSwitcher items={noticeItems} key={noticeItems[0].notice.noticeId} />)}</div></section>)}
     {!plans.length && <div className="housing-card"><h2>계산할 예시 분양 정보가 없어요</h2><p>희망 지역 또는 자금 입력값을 조정하면 예상 대출·자금 시뮬레이션을 다시 볼 수 있습니다.</p><Link href="/housing/profile">조건 수정하기</Link></div>}
   </main><aside className="history-aside"><section className="historical-reference housing-card"><p className="housing-kicker">PAST SALE SIMULATION</p><h2>과거 분양에도 자금 계획을 대입해 보세요</h2><p>당시 분양가에 현재 입력 자금과 참고용 대출 추정치를 적용한 시뮬레이션입니다. 실제 과거 대출·자격·당첨 결과가 아닙니다.</p>{history.length ? history.map((item) => <article className="past-card" key={`${item.notice.noticeId}-${item.housingType.typeName}`}><p>{item.notice.noticeDate} · {item.notice.region}</p><h3>{item.notice.title} {item.housingType.typeName}</h3><strong>당시 분양가 {formatWon(item.housingType.price)}</strong><span className={`status status-${item.status.toLowerCase()}`}>{fundingLabels[item.funding.status]}</span><ul><li>참고용 예상 담보대출 {formatWon(item.funding.estimatedLoans.mortgage)}</li>{item.funding.shortfall > 0 && <li>예상 추가자금 {formatWon(item.funding.shortfall)}</li>}</ul></article>) : <p>선택한 지역에 비교할 과거 사례가 없습니다.</p>}</section></aside></div>;
 }
@@ -55,6 +55,18 @@ function formatHousingType(item: Recommendation): string {
   const suffix = rawType.replace(/^\d+(?:\.\d+)?/, "");
   const area = Number.isInteger(item.housingType.exclusiveArea) ? item.housingType.exclusiveArea.toString() : item.housingType.exclusiveArea.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
   return `${area}㎡${suffix ? ` ${suffix}형` : ""}`;
+}
+
+function groupNoticeItems(items: Recommendation[]): Recommendation[][] {
+  const grouped = new Map<string, Recommendation[]>();
+  for (const item of items) grouped.set(item.notice.noticeId, [...(grouped.get(item.notice.noticeId) ?? []), item]);
+  return [...grouped.values()];
+}
+
+function NoticeTypeSwitcher({ items }: { items: Recommendation[] }) {
+  const [selectedType, setSelectedType] = useState(items[0].housingType.typeName);
+  const selectedItem = items.find((item) => item.housingType.typeName === selectedType) ?? items[0];
+  return <section className="notice-type-switcher" aria-label={`${selectedItem.notice.title} 주택형 선택`}><div className="type-switcher-heading"><div><p>주택형 선택</p><strong>{selectedItem.notice.title}</strong></div><span>{items.length}개 타입</span></div><div className="type-switcher-buttons" role="group" aria-label="주택형"><span className="type-switcher-hint">원하는 타입을 누르면 해당 가격과 대출 예상치가 바뀝니다.</span>{items.map((item) => <button type="button" className={item.housingType.typeName === selectedItem.housingType.typeName ? "is-selected" : ""} aria-pressed={item.housingType.typeName === selectedItem.housingType.typeName} key={item.housingType.typeName} onClick={() => setSelectedType(item.housingType.typeName)}>{formatHousingType(item)}</button>)}</div><div className="type-switcher-panel" key={selectedItem.housingType.typeName}><PlanCard item={selectedItem} /></div></section>;
 }
 
 function PlanCard({ item }: { item: Recommendation }) {

@@ -1,4 +1,3 @@
-import { housingNotices } from "../../data/housing/notices";
 import type { HousingNotice } from "./types";
 
 const LH_NOTICE_ENDPOINT = "https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/lhLeaseNoticeInfo1";
@@ -179,7 +178,10 @@ function fixtureFeed(mode: Extract<NoticeFeedMode, "fixture" | "fallback">): Pub
   return {
     mode,
     status: mode === "fixture" ? "missing_key" : "upstream_error",
-    notices: housingNotices.filter((notice) => !notice.isHistorical),
+    // Do not substitute sample listings for unavailable official data. A blank
+    // response makes the source state clear and prevents stale examples from
+    // looking like applications users can make.
+    notices: [],
     updatedAt: new Date().toISOString(),
     message: mode === "fixture" ? "LH API 키가 배포 환경에 설정되지 않았습니다." : "LH 공고 서비스를 지금 불러오지 못했습니다.",
   };

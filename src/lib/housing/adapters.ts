@@ -1,4 +1,6 @@
-import { housingNotices } from "../../data/housing/notices"; import type { HousingNotice, PublicHousingProvider, RealEstateTransactionProvider, SubscriptionNoticeProvider } from "./types";
-export const fixtureSubscriptionNoticeProvider: SubscriptionNoticeProvider = { async getNotices(): Promise<HousingNotice[]> { return housingNotices.filter(notice => !notice.isHistorical); } };
-export const fixturePublicHousingProvider: PublicHousingProvider = { async getNotices(): Promise<HousingNotice[]> { return housingNotices; } };
+import type { PublicHousingProvider, RealEstateTransactionProvider, SubscriptionNoticeProvider } from "./types";
+// Official data is fetched through the LH server route. These adapters remain
+// intentionally empty until another verified provider is connected.
+export const unavailableSubscriptionNoticeProvider: SubscriptionNoticeProvider = { async getNotices() { return []; } };
+export const unavailablePublicHousingProvider: PublicHousingProvider = { async getNotices() { return []; } };
 export const unavailableTransactionProvider: RealEstateTransactionProvider = { async getComparableTransactions() { return []; } };

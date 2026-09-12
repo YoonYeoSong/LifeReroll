@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { housingNotices } from "../../data/housing/notices";
 import { sampleUser } from "../../data/housing/sample-user";
 import { analyzeEligibility, analyzeFunding, analyzeSubscription, recommend } from "./index";
+import type { HousingNotice } from "./types";
 
-const notice = housingNotices[0];
+const notice: HousingNotice = {
+  noticeId: "test-notice", title: "테스트 공고", provider: "테스트", region: "경기도", city: "부천시", district: "", noticeDate: "2026-09-01", applicationStartDate: "2026-09-21", applicationEndDate: "2026-09-23",
+  housingCategory: "공공분양", supplyType: "일반공급", newHomeType: "아파트", residencyRequirements: { regions: ["경기도"], minMonths: 12 }, incomeRequirements: { maxAnnualIncome: 45_000_000 }, assetRequirements: { maxAssets: 350_000_000 },
+  subscriptionRequirements: { minimumMonths: 24, minimumPayments: 24, minimumRecognizedAmount: 6_000_000, acceptedAccountTypes: ["housingSubscriptionSavings", "youthHousingDream"] }, specialSupplyTypes: ["청년"], sourceUrl: "https://example.test/notice", sourceName: "테스트", sourceDate: "2026-09-01",
+  housingTypes: [
+    { typeName: "59A", exclusiveArea: 59, supplyCount: 180, price: 510_000_000, estimatedTotalCost: 530_000_000, specialSupplyCount: 90, generalSupplyCount: 90 },
+    { typeName: "74A", exclusiveArea: 74, supplyCount: 80, price: 610_000_000, estimatedTotalCost: 633_000_000, specialSupplyCount: 40, generalSupplyCount: 40 },
+  ],
+};
+const expensiveNotice: HousingNotice = { ...notice, noticeId: "test-expensive-notice", housingTypes: [{ typeName: "84A", exclusiveArea: 84, supplyCount: 70, price: 780_000_000, estimatedTotalCost: 810_000_000, specialSupplyCount: 35, generalSupplyCount: 35 }] };
 describe("Cheongyak Fit analysis", () => {
-  it("treats the sample homeless resident as eligible for the matching fixture", () => {
+  it("treats the sample homeless resident as eligible for a matching notice", () => {
     expect(analyzeEligibility(sampleUser, notice).status).toBe("eligible");
   });
   it("reports a regional mismatch as ineligible", () => {
@@ -36,11 +45,11 @@ describe("Cheongyak Fit analysis", () => {
     expect(result.totalExpectedFunds).toBe(result.ownFunds + result.leaseDepositReturnFunds + result.giftFunds + result.familyLoanFunds + result.estimatedFinancing.estimated + 20_000_000);
   });
   it("makes a shortfall visible for an unaffordable type", () => {
-    const result = analyzeFunding({ ...sampleUser, assets: { ...sampleUser.assets, availableCash: 0, savings: 0, financialAssets: 0 }, familySupport: {} }, housingNotices[1].housingTypes[0]);
+    const result = analyzeFunding({ ...sampleUser, assets: { ...sampleUser.assets, availableCash: 0, savings: 0, financialAssets: 0 }, familySupport: {} }, expensiveNotice.housingTypes[0]);
     expect(result.shortfall).toBeGreaterThan(0);
   });
   it("returns type-level recommendations and never labels score as probability", () => {
-    const results = recommend(sampleUser, housingNotices);
+    const results = recommend(sampleUser, [notice, expensiveNotice]);
     expect(results).toHaveLength(3);
     expect(results[0]).toHaveProperty("overallScore");
     expect(results[0]).toHaveProperty("status");

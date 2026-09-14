@@ -57,7 +57,7 @@ export function ProfileWizard() {
   const selectAllRegions = () => set("preferences", { ...profile.preferences, preferredRegions: [...regions] });
   const clearRegions = () => set("preferences", { ...profile.preferences, preferredRegions: [] });
 
-  return <div className="wizard"><ol className="wizard-steps">{steps.map((label, index) => <li className={index === step ? "is-current" : index < step ? "is-done" : ""} key={label}>{index + 1}. {label}</li>)}</ol><section className="housing-card wizard-card">
+  return <div className="wizard"><div className="wizard-progress"><ol className="wizard-steps">{steps.map((label, index) => <li className={index === step ? "is-current" : index < step ? "is-done" : ""} key={label}>{index + 1}. {label}</li>)}</ol><p><strong>{step + 1}/6</strong> 단계 · 약 2분 소요</p></div><section className="housing-card wizard-card">
     {step === 0 && <><h2>기본 정보</h2><p className="field-help">공고의 거주 요건을 가늠하기 위한 정보예요. 날짜가 확실하지 않으면 비워두고 결과에서 ‘확인 필요’로 보세요.</p><div className="housing-form-grid">{textField("출생연도", profile.birthYear, value => set("birthYear", number(value)), "number")}
       <label className="housing-field"><FieldLabel label="현재 거주 시/도" help="주민등록상 현재 주소의 시·도를 선택하세요." /><select value={profile.residenceRegion} onChange={event => set("residenceRegion", event.target.value)}><option value="">선택</option>{regions.map(region => <option value={region} key={region}>{region}</option>)}</select></label>
       {textField("시/군/구", profile.residenceCity, value => set("residenceCity", value), "text", "현재 주민등록상 시·군·구를 적어 주세요.")}

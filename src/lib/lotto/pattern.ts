@@ -1,5 +1,5 @@
-import { MAX_SHARED_NUMBERS, PATTERN_CANDIDATE_COUNT, PATTERN_GAME_COUNT, PATTERN_WEIGHTS } from "./constants";
-import { gameKey, randomGame, secureRandom, sharedNumberCount, type RandomSource } from "./random";
+import { PATTERN_CANDIDATE_COUNT, PATTERN_WEIGHTS } from "./constants";
+import { gameKey, randomGame, sampleWeightedNumber, secureRandom, type RandomSource } from "./random";
 import { normalizedCount, pairKey } from "./statistics";
 import type { LottoStats } from "./types";
 
@@ -32,21 +32,25 @@ export function patternScore(game: number[], stats: LottoStats): number {
   return overall * PATTERN_WEIGHTS.overall + recent * PATTERN_WEIGHTS.recent + pair * PATTERN_WEIGHTS.pair + combinationShapeScore(game, stats) * PATTERN_WEIGHTS.shape;
 }
 
-export function generatePatternGames(stats: LottoStats, excluded = new Set<string>(), random: RandomSource = secureRandom, count = PATTERN_GAME_COUNT): number[][] {
+/**
+ * Scores candidate combinations with the documented 35/25/25/15 signals, then
+ * performs weighted sampling. This retains variation instead of fixing the top rank.
+ */
+export function generatePatternGames(stats: LottoStats, excluded = new Set<string>(), random: RandomSource = secureRandom, count = 1): number[][] {
   const candidates = new Map<string, { game: number[]; score: number }>();
   for (let index = 0; index < PATTERN_CANDIDATE_COUNT; index += 1) {
     const game = randomGame(random);
     const key = gameKey(game);
     if (!excluded.has(key) && !candidates.has(key)) candidates.set(key, { game, score: patternScore(game, stats) });
   }
-  const ranked = [...candidates.values()].sort((left, right) => right.score - left.score);
   const picked: number[][] = [];
-  for (const candidate of ranked) {
-    if (picked.length === count) break;
-    if (picked.every((game) => sharedNumberCount(game, candidate.game) <= MAX_SHARED_NUMBERS)) {
-      picked.push(candidate.game);
-      excluded.add(gameKey(candidate.game));
-    }
+  const available = [...candidates.values()];
+  while (picked.length < count && available.length > 0) {
+    const candidate = sampleWeightedNumber(available, available.map((item) => item.score + 0.01), random);
+    available.splice(available.indexOf(candidate), 1);
+    picked.push(candidate.game);
+    excluded.add(gameKey(candidate.game));
   }
+  if (picked.length !== count) throw new Error("Unable to generate a Pattern Pick.");
   return picked;
 }

@@ -13,7 +13,7 @@ export const secureRandom: RandomSource = () => {
   return Math.random();
 };
 
-export function sampleWeightedNumber(numbers: number[], weights: number[], random: RandomSource = secureRandom): number {
+export function sampleWeightedNumber<T>(numbers: T[], weights: number[], random: RandomSource = secureRandom): T {
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   let cursor = random() * total;
   for (let index = 0; index < numbers.length; index += 1) {

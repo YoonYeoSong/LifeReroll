@@ -4,23 +4,17 @@ import type { GeneratedGame } from "@/lib/lotto/types";
 const methodDescriptions = {
   "Historical Pick": "전체 출현 빈도를 가중치로 조합",
   "Pattern Pick": "빈도·최근·Pair·형태 점수를 조합",
-  "Coverage Pick": "게임 간 겹침을 줄인 분산 조합",
+  "Ensemble": "패턴·역대 빈도 신호를 정규화해 결합",
+  "Coverage": "앞선 게임의 번호 분포를 참고한 분산 조합",
   "Pure Random": "통계를 쓰지 않는 균등 무작위 조합",
-  "Balanced Pick": "극단을 피한 균형 분포 조합",
-  "Countertrend Pick": "상대적으로 낮은 출현 빈도 관점 조합",
-  "Pair Avoidance Pick": "낮은 동반 출현 번호쌍 관점 조합",
-  "Ensemble Pick": "여러 점수를 정규화한 종합 조합",
 } as const;
 
 const methodLabels = {
   "Historical Pick": "출현 빈도 픽",
   "Pattern Pick": "패턴 분석 픽",
-  "Coverage Pick": "분산 조합 픽",
+  "Ensemble": "앙상블 픽",
+  "Coverage": "커버리지 픽",
   "Pure Random": "순수 랜덤 픽",
-  "Balanced Pick": "균형 분포 픽",
-  "Countertrend Pick": "저빈도 관점 픽",
-  "Pair Avoidance Pick": "동반출현 회피 픽",
-  "Ensemble Pick": "종합 분석 픽",
 } as const;
 
 export function LottoGameList({ games, isRolling = false }: { games: GeneratedGame[]; isRolling?: boolean }) {

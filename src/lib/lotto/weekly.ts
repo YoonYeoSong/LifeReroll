@@ -29,13 +29,13 @@ function formatKst(date: Date): string {
   return `${kst.getUTCFullYear()}-${pad(kst.getUTCMonth() + 1)}-${pad(kst.getUTCDate())}T${pad(kst.getUTCHours())}:${pad(kst.getUTCMinutes())}:${pad(kst.getUTCSeconds())}+09:00`;
 }
 
-/** The weekly boundary is Monday 06:00:00 in Asia/Seoul, independent of browser locale. */
+/** The weekly boundary is Sunday 06:00:00 in Asia/Seoul, independent of browser locale. */
 export function getWeeklyPeriod(now: Date = new Date()): WeeklyPeriod {
   const kst = new Date(now.getTime() + KST_OFFSET_MS);
   const weekday = kst.getUTCDay();
-  const daysSinceMonday = (weekday + 6) % 7;
-  let startWallClockMs = Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate() - daysSinceMonday, 6, 0, 0);
-  if (weekday === 1 && kst.getUTCHours() < 6) startWallClockMs -= WEEK_MS;
+  const daysSinceSunday = weekday;
+  let startWallClockMs = Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate() - daysSinceSunday, 6, 0, 0);
+  if (weekday === 0 && kst.getUTCHours() < 6) startWallClockMs -= WEEK_MS;
   const startsAt = new Date(startWallClockMs - KST_OFFSET_MS);
   return { weekKey: formatKst(startsAt), startsAt, nextResetAt: new Date(startsAt.getTime() + WEEK_MS) };
 }

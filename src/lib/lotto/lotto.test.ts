@@ -88,9 +88,9 @@ describe("lotto generators", () => {
 
   it("counts pairs and only uses the most recent 100 draws", () => { expect(stats.recentDrawCount).toBe(100); expect(stats.pairCounts[pairKey(41, 45)]).toBe(110); });
   it("reports invalid history", () => { expect(validateLottoHistory([{ round: 1, numbers: [1, 1, 2], bonus: 50 }])).not.toHaveLength(0); });
-  it("switches weekly period at Monday 06:00 KST and validates stored results", () => {
-    expect(getWeeklyPeriod(new Date("2026-10-18T20:59:59Z")).weekKey).toBe("2026-10-12T06:00:00+09:00");
-    expect(getWeeklyPeriod(new Date("2026-10-18T21:00:00Z")).weekKey).toBe("2026-10-19T06:00:00+09:00");
+  it("switches weekly period at Sunday 06:00 KST and validates stored results", () => {
+    expect(getWeeklyPeriod(new Date("2026-10-17T20:59:59Z")).weekKey).toBe("2026-10-11T06:00:00+09:00");
+    expect(getWeeklyPeriod(new Date("2026-10-17T21:00:00Z")).weekKey).toBe("2026-10-18T06:00:00+09:00");
     const result = createWeeklyResult(generateRerollFromStats(stats), new Date("2026-10-23T00:00:00Z"));
     expect(isValidWeeklyResult(result, result.weekKey)).toBe(true);
     expect(isValidWeeklyResult({ ...result, games: result.games.slice(1) }, result.weekKey)).toBe(false);
